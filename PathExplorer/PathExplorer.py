@@ -200,7 +200,7 @@ class PathExplorerWidget:
     curveMakerLogic.NumberOfIntermediatePoints = 30
     curveMakerLogic.TubeRadius = 1.0
     curveMakerLogic.activateEvent(self.markupsFiducialList,self.curveModel)
-    self.polydataPoints = curveMakerLogic.getSplineFilterOutputPoints()
+    self.polydataPoints = curveMakerLogic.getGeneratedPoints()
     self.planePositionWidget.setMaximum(self.polydataPoints.GetNumberOfPoints())
     print("Run the algorithm")
     logic.run(self.inputSelector.currentNode())
