@@ -193,7 +193,10 @@ class PathExplorerLogic:
   def __init__(self):
     self.markupsFiducialList = None
     self.polydataPoints = None
-    self.curveModel = slicer.mrmlScene.CreateNodeByClass('vtkMRMLModelNode')
+
+    # Bug #12139
+    # self.curveModel = slicer.mrmlScene.CreateNodeByClass('vtkMRMLModelNode')
+    self.curveModel = slicer.vtkMRMLModelNode()
     self.redViewer = slicer.mrmlScene.GetNodeByID('vtkMRMLSliceNodeRed')
     self.yellowViewer = slicer.mrmlScene.GetNodeByID('vtkMRMLSliceNodeYellow')
     self.greenViewer = slicer.mrmlScene.GetNodeByID('vtkMRMLSliceNodeGreen')
