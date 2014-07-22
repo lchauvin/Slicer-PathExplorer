@@ -93,33 +93,34 @@ class PathExplorerWidget:
     #
     # input volume selector
     #
-    self.inputSelector = slicer.qMRMLNodeComboBox()
-    self.inputSelector.nodeTypes = ( ("vtkMRMLMarkupsFiducialNode"), "" )
-    self.inputSelector.selectNodeUponCreation = True
-    self.inputSelector.addEnabled = True
-    self.inputSelector.removeEnabled = True
-    self.inputSelector.noneEnabled = False
-    self.inputSelector.showHidden = False
-    self.inputSelector.showChildNodeTypes = False
-    self.inputSelector.setMRMLScene( slicer.mrmlScene )
-    self.inputSelector.setToolTip( "Markups Fiducial List" )
-    parametersFormLayout.addRow("Markups Fiducial List: ", self.inputSelector)
+    self.fiducialListSelector = slicer.qMRMLNodeComboBox()
+    self.fiducialListSelector.nodeTypes = ( ("vtkMRMLMarkupsFiducialNode"), "" )
+    self.fiducialListSelector.selectNodeUponCreation = True
+    self.fiducialListSelector.addEnabled = True
+    self.fiducialListSelector.removeEnabled = True
+    self.fiducialListSelector.renameEnabled = True
+    self.fiducialListSelector.noneEnabled = False
+    self.fiducialListSelector.showHidden = False
+    self.fiducialListSelector.showChildNodeTypes = False
+    self.fiducialListSelector.setMRMLScene( slicer.mrmlScene )
+    self.fiducialListSelector.setToolTip( "Markups Fiducial List" )
+    parametersFormLayout.addRow("Markups Fiducial List: ", self.fiducialListSelector)
 
     #
     # reslicing plane position
     #
-    self.planePositionWidget = qt.QSlider(qt.Qt.Horizontal)
-    self.planePositionWidget.setMinimum(0)
-    self.planePositionWidget.setMaximum(0)
-    parametersFormLayout.addRow("Plane Position: ", self.planePositionWidget)
+    self.planePositionSlider = qt.QSlider(qt.Qt.Horizontal)
+    self.planePositionSlider.setMinimum(0)
+    self.planePositionSlider.setMaximum(0)
+    parametersFormLayout.addRow("Plane Position: ", self.planePositionSlider)
 
     #
     # reslicing plane orientation
     #
-    self.planeOrientationWidget = qt.QSlider(qt.Qt.Horizontal)
-    self.planeOrientationWidget.setMinimum(0)
-    self.planeOrientationWidget.setMaximum(360)
-    parametersFormLayout.addRow("Plane Orientation: ", self.planeOrientationWidget)
+    self.planeOrientationSlider = qt.QSlider(qt.Qt.Horizontal)
+    self.planeOrientationSlider.setMinimum(0)
+    self.planeOrientationSlider.setMaximum(360)
+    parametersFormLayout.addRow("Plane Orientation: ", self.planeOrientationSlider)
 
     #
     # Apply Button
@@ -129,17 +130,11 @@ class PathExplorerWidget:
     self.applyButton.enabled = False
     parametersFormLayout.addRow(self.applyButton)
 
-    self.markupsFiducialList = None
-    self.polydataPoints = None
-    self.curveModel = slicer.mrmlScene.CreateNodeByClass('vtkMRMLModelNode')
-    self.planeTransform = slicer.mrmlScene.CreateNodeByClass('vtkMRMLLinearTransformNode')
-    self.redViewer = slicer.mrmlScene.GetNodeByID('vtkMRMLSliceNodeRed')
-
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
-    self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.planePositionWidget.connect("valueChanged(int)", self.onPlaneChanged)
-    self.planeOrientationWidget.connect("valueChanged(int)", self.onPlaneChanged)
+    self.fiducialListSelector.connect("nodeActivated(vtkMRMLNode*)", self.onSelect)
+    self.planePositionSlider.connect("valueChanged(int)", self.onPlaneChanged)
+    self.planeOrientationSlider.connect("valueChanged(int)", self.onPlaneChanged)
 
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -147,64 +142,16 @@ class PathExplorerWidget:
   def cleanup(self):
     pass
 
-  def onMarkupsModified(self,obj,event):
-    print (obj,event)
-
-  def onPlaneChanged(self,value):
-    pt = self.planePositionWidget.value
-    angle = self.planeOrientationWidget.value
-    pos = self.polydataPoints.GetPoint(pt)
-    norm = [0.0, 0.0, 0.0]
-    v1 = [0.0, 0.0, 0.0]
-    v2 = [0.0, 0.0, 0.0]
-
-    if pt < self.polydataPoints.GetNumberOfPoints()-1:
-      pos1 = self.polydataPoints.GetPoint(pt+1)
-      norm = [pos1[0]-pos[0], pos1[1]-pos[1], pos1[2]-pos[2]]
-    else:
-      pos1 = self.polydataPoints.GetPoint(pt-1)
-      norm = [-(pos1[0]-pos[0]), -(pos1[1]-pos[1]), -(pos1[2]-pos[2])]
-
-    math = vtk.vtkMath()
-    
-    normLength = math.Normalize(norm)
-    norm[0] /= normLength
-    norm[1] /= normLength
-    norm[2] /= normLength
-
-    math.Perpendiculars(norm,v1,v2,angle*math.Pi()/180)
-
-    self.redViewer.SetSliceToRASByNTP(norm[0],norm[1],norm[2],v1[0],v1[1],v1[2],pos[0],pos[1],pos[2],0)
-
   def onSelect(self):
-#    if (self.markupsFiducialList):
-#      self.markupsFiducialList.RemoveObserver(self.markupsFiducialList.LabelFormatModifiedEvent)
-#      self.markupsFiducialList.RemoveObserver(self.markupsFiducialList.PointModifiedEvent)
-#      self.markupsFiducialList.RemoveObserver(self.markupsFiducialList.NthMarkupModifiedEvent)
-#      self.markupsFiducialList.RemoveObserver(self.markupsFiducialList.MarkupAddedEvent)
-#      self.markupsFiducialList.RemoveObserver(self.markupsFiducialList.MarkupRemovedEvent)
-#
-    self.markupsFiducialList = self.inputSelector.currentNode()
-#
-#    self.markupsFiducialList.AddObserver(self.markupsFiducialList.LabelFormatModifiedEvent, self.onMarkupsModified)
-#    self.markupsFiducialList.AddObserver(self.markupsFiducialList.PointModifiedEvent, self.onMarkupsModified)
-#    self.markupsFiducialList.AddObserver(self.markupsFiducialList.NthMarkupModifiedEvent, self.onMarkupsModified)
-#    self.markupsFiducialList.AddObserver(self.markupsFiducialList.MarkupAddedEvent, self.onMarkupsModified)
-#    self.markupsFiducialList.AddObserver(self.markupsFiducialList.MarkupRemovedEvent, self.onMarkupsModified)
-#
-    self.applyButton.enabled = self.inputSelector.currentNode()
+    self.applyButton.enabled = self.fiducialListSelector.currentNode()
 
   def onApplyButton(self):
-    logic = PathExplorerLogic()
-    curveMakerLogic = CurveMaker.CurveMakerLogic()
-    curveMakerLogic.NumberOfIntermediatePoints = 30
-    curveMakerLogic.TubeRadius = 1.0
-    curveMakerLogic.activateEvent(self.markupsFiducialList,self.curveModel)
-    self.polydataPoints = curveMakerLogic.getGeneratedPoints()
-    self.planePositionWidget.setMaximum(self.polydataPoints.GetNumberOfPoints()-1)
-    self.planePositionWidget.setValue(0)
+    self.logic = PathExplorerLogic()
+
     print("Run the algorithm")
-    logic.run(self.inputSelector.currentNode())
+    self.logic.run(self.fiducialListSelector.currentNode())
+    self.planePositionSlider.setMaximum(self.logic.numberOfPoints-1)
+    self.logic.updateSlice(self.planePositionSlider.value, self.planeOrientationSlider.value)
 
   def onReload(self,moduleName="PathExplorer"):
     """Generic reload method for any scripted module.
@@ -224,6 +171,13 @@ class PathExplorerWidget:
       qt.QMessageBox.warning(slicer.util.mainWindow(),
           "Reload and Test", 'Exception!\n\n' + str(e) + "\n\nSee Python Console for Stack Trace")
 
+  def onPlaneChanged(self,value):
+    if self.logic:
+      pt = self.planePositionSlider.value
+      angle = self.planeOrientationSlider.value
+
+      self.logic.updateSlice(pt,angle)
+
 
 #
 # PathExplorerLogic
@@ -237,20 +191,18 @@ class PathExplorerLogic:
   requiring an instance of the Widget
   """
   def __init__(self):
-    pass
+    self.markupsFiducialList = None
+    self.polydataPoints = None
+    self.curveModel = slicer.mrmlScene.CreateNodeByClass('vtkMRMLModelNode')
+    self.redViewer = slicer.mrmlScene.GetNodeByID('vtkMRMLSliceNodeRed')
+    self.yellowViewer = slicer.mrmlScene.GetNodeByID('vtkMRMLSliceNodeYellow')
+    self.greenViewer = slicer.mrmlScene.GetNodeByID('vtkMRMLSliceNodeGreen')
+    self.numberOfPoints = 0
 
-  def hasImageData(self,volumeNode):
-    """This is a dummy logic method that
-    returns true if the passed in volume
-    node has valid image data
-    """
-    if not volumeNode:
-      print('no volume node')
-      return False
-    if volumeNode.GetImageData() == None:
-      print('no image data')
-      return False
-    return True
+    # Configure CurveMakerLogic
+    self.curveMakerLogic = CurveMaker.CurveMakerLogic()
+    self.curveMakerLogic.NumberOfIntermediatePoints = 30
+    self.curveMakerLogic.TubeRadius = 1.0
 
   def delayDisplay(self,message,msec=1000):
     #
@@ -265,14 +217,44 @@ class PathExplorerLogic:
     qt.QTimer.singleShot(msec, self.info.close)
     self.info.exec_()
 
-  def run(self,inputVolume):
+  def run(self,markups):
     """
     Run the actual algorithm
     """
+    self.markupsFiducialList = markups
 
-    self.delayDisplay('Running the aglorithm')
+    if self.curveMakerLogic and self.markupsFiducialList and self.curveModel:
+      self.delayDisplay('Running the aglorithm')
+
+      self.curveMakerLogic.activateEvent(self.markupsFiducialList,self.curveModel)
+      self.polydataPoints = self.curveMakerLogic.getGeneratedPoints()
+      self.numberOfPoints = self.polydataPoints.GetNumberOfPoints()
 
     return True
+
+  def updateSlice(self, point, angle):
+    pos = self.polydataPoints.GetPoint(point)
+    norm = [0.0, 0.0, 0.0]
+    v1 = [0.0, 0.0, 0.0]
+    v2 = [0.0, 0.0, 0.0]
+
+    if point < self.numberOfPoints-1:
+      pos1 = self.polydataPoints.GetPoint(point+1)
+      norm = [pos1[0]-pos[0], pos1[1]-pos[1], pos1[2]-pos[2]]
+    else:
+      pos1 = self.polydataPoints.GetPoint(point-1)
+      norm = [-(pos1[0]-pos[0]), -(pos1[1]-pos[1]), -(pos1[2]-pos[2])]
+
+    math = vtk.vtkMath()
+
+    normLength = math.Normalize(norm)
+    norm[0] /= normLength
+    norm[1] /= normLength
+    norm[2] /= normLength
+
+    math.Perpendiculars(norm,v1,v2,angle*math.Pi()/180)
+
+    self.redViewer.SetSliceToRASByNTP(norm[0],norm[1],norm[2],v1[0],v1[1],v1[2],pos[0],pos[1],pos[2],0)
 
 
 class PathExplorerTest(unittest.TestCase):
@@ -341,5 +323,4 @@ class PathExplorerTest(unittest.TestCase):
 
     volumeNode = slicer.util.getNode(pattern="FA")
     logic = PathExplorerLogic()
-    self.assertTrue( logic.hasImageData(volumeNode) )
     self.delayDisplay('Test passed!')
