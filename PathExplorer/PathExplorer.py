@@ -226,7 +226,7 @@ class PathExplorerLogic:
     if self.curveMakerLogic and self.markupsFiducialList and self.curveModel:
       self.delayDisplay('Running the aglorithm')
 
-      self.curveMakerLogic.activateEvent(self.markupsFiducialList,self.curveModel)
+      self.curveMakerLogic.generateSplineFromMarkups(self.markupsFiducialList,self.curveModel)
       self.polydataPoints = self.curveMakerLogic.getGeneratedPoints()
       self.numberOfPoints = self.polydataPoints.GetNumberOfPoints()
 
