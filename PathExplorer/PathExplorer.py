@@ -202,6 +202,7 @@ class PathExplorerWidget:
     curveMakerLogic.activateEvent(self.markupsFiducialList,self.curveModel)
     self.polydataPoints = curveMakerLogic.getGeneratedPoints()
     self.planePositionWidget.setMaximum(self.polydataPoints.GetNumberOfPoints()-1)
+    self.planePositionWidget.setValue(0)
     print("Run the algorithm")
     logic.run(self.inputSelector.currentNode())
 
