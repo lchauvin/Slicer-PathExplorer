@@ -206,6 +206,7 @@ class PathExplorerLogic:
     self.curveMakerLogic = CurveMaker.CurveMakerLogic()
     self.curveMakerLogic.NumberOfIntermediatePoints = 30
     self.curveMakerLogic.TubeRadius = 1.0
+    self.curveMakerLogic.AutomaticUpdate = True
 
   def delayDisplay(self,message,msec=1000):
     #
@@ -227,38 +228,39 @@ class PathExplorerLogic:
     self.markupsFiducialList = markups
 
     if self.curveMakerLogic and self.markupsFiducialList and self.curveModel:
-      self.delayDisplay('Running the aglorithm')
-
-      self.curveMakerLogic.generateSplineFromMarkups(self.markupsFiducialList,self.curveModel)
-      self.polydataPoints = self.curveMakerLogic.getGeneratedPoints()
+      self.curveMakerLogic.SourceNode = self.markupsFiducialList
+      self.curveMakerLogic.DestinationNode = self.curveModel
+      self.curveMakerLogic.generateControlPolyData()
+      self.polydataPoints = self.curveMakerLogic.updateCurve()
       self.numberOfPoints = self.polydataPoints.GetNumberOfPoints()
 
     return True
 
   def updateSlice(self, point, angle):
-    pos = self.polydataPoints.GetPoint(point)
-    norm = [0.0, 0.0, 0.0]
-    v1 = [0.0, 0.0, 0.0]
-    v2 = [0.0, 0.0, 0.0]
+    print self.polydataPoints
+    if self.polydataPoints:
+      pos = self.polydataPoints.GetPoint(point)
+      norm = [0.0, 0.0, 0.0]
+      v1 = [0.0, 0.0, 0.0]
+      v2 = [0.0, 0.0, 0.0]
 
-    if point < self.numberOfPoints-1:
-      pos1 = self.polydataPoints.GetPoint(point+1)
-      norm = [pos1[0]-pos[0], pos1[1]-pos[1], pos1[2]-pos[2]]
-    else:
-      pos1 = self.polydataPoints.GetPoint(point-1)
-      norm = [-(pos1[0]-pos[0]), -(pos1[1]-pos[1]), -(pos1[2]-pos[2])]
+      if point < self.numberOfPoints-1:
+        pos1 = self.polydataPoints.GetPoint(point+1)
+        norm = [pos1[0]-pos[0], pos1[1]-pos[1], pos1[2]-pos[2]]
+      else:
+        pos1 = self.polydataPoints.GetPoint(point-1)
+        norm = [-(pos1[0]-pos[0]), -(pos1[1]-pos[1]), -(pos1[2]-pos[2])]
 
-    math = vtk.vtkMath()
+      math = vtk.vtkMath()
 
-    normLength = math.Normalize(norm)
-    norm[0] /= normLength
-    norm[1] /= normLength
-    norm[2] /= normLength
+      normLength = math.Normalize(norm)
+      norm[0] /= normLength
+      norm[1] /= normLength
+      norm[2] /= normLength
 
-    math.Perpendiculars(norm,v1,v2,angle*math.Pi()/180)
+      math.Perpendiculars(norm,v1,v2,angle*math.Pi()/180)
 
-    self.redViewer.SetSliceToRASByNTP(norm[0],norm[1],norm[2],v1[0],v1[1],v1[2],pos[0],pos[1],pos[2],0)
-
+      self.redViewer.SetSliceToRASByNTP(norm[0],norm[1],norm[2],v1[0],v1[1],v1[2],pos[0],pos[1],pos[2],0)
 
 class PathExplorerTest(unittest.TestCase):
   """
